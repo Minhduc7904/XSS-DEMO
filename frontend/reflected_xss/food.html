@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>🍜 Danh sách món ăn</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #fafafa;
+        }
+
+        h1 {
+            color: #e74c3c;
+        }
+
+        #searchBox {
+            padding: 8px;
+            width: 250px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            margin-left: 6px;
+            background: #27ae60;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            padding: 10px;
+            background: #fff;
+            margin-bottom: 6px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .highlight {
+            background: #fffae6;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🍜 Danh sách món ăn</h1>
+    <div>
+        <input id="searchBox" type="text" placeholder="Nhập từ khóa...">
+        <button id="btnSearch">Tìm</button>
+        <div id="searchText"></div>
+    </div>
+    <p id="resultInfo"></p>
+    <ul id="foodList"></ul>
+
+    <script>
+        // Dữ liệu mẫu
+        const foods = [
+            "Phở bò",
+            "Phở gà",
+            "Bún chả",
+            "Bánh mì pate",
+            "Bánh cuốn",
+            "Bánh xèo",
+            "Gỏi cuốn",
+            "Cơm tấm",
+            "Chả cá Lã Vọng",
+            "Bún bò Huế",
+            "Hủ tiếu",
+            "Cà phê sữa đá"
+        ];
+
+        const listEl = document.getElementById("foodList");
+        const searchBox = document.getElementById("searchBox");
+        const resultInfo = document.getElementById("resultInfo");
+        const searchText = document.getElementById("searchText")
+        // Hàm bỏ dấu tiếng Việt
+        function removeAccents(str) {
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
+
+        // Render danh sách theo từ khóa
+        function renderList(keyword = "") {
+            listEl.innerHTML = "";
+
+            // Chèn trực tiếp keyword -> sẽ thực thi <script> nếu có
+            searchText.innerHTML = keyword;
+
+            const normalizedKeyword = removeAccents(keyword.toLowerCase());
+            let filtered = foods.filter(f =>
+                removeAccents(f.toLowerCase()).includes(normalizedKeyword)
+            );
+
+            if (keyword) {
+                resultInfo.textContent = `Kết quả cho: "${keyword}" (${filtered.length} món)`;
+            } else {
+                resultInfo.textContent = "Hiển thị tất cả món ăn";
+            }
+
+            // Thực thi script trong searchText (nếu có)
+            const scripts = searchText.querySelectorAll('script');
+            // console.log("scripts", scripts)
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                for (const attr of oldScript.attributes) {
+                    newScript.setAttribute(attr.name, attr.value);
+                }
+                newScript.textContent = oldScript.textContent;
+                oldScript.parentNode.replaceChild(newScript, oldScript);
+            });
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = "<li>❌ Không tìm thấy món nào</li>";
+                return;
+            }
+
+            filtered.forEach(f => {
+                const li = document.createElement("li");
+                if (keyword) {
+                    const normalizedFood = removeAccents(f.toLowerCase());
+                    const index = normalizedFood.indexOf(normalizedKeyword);
+                    if (index !== -1) {
+                        const before = f.substring(0, index);
+                        const match = f.substring(index, index + keyword.length);
+                        const after = f.substring(index + keyword.length);
+                        li.innerHTML = before + "<span class='highlight'>" + match + "</span>" + after;
+                    } else {
+                        li.textContent = f;
+                    }
+                } else {
+                    li.textContent = f;
+                }
+                listEl.appendChild(li);
+            });
+
+
+        }
+
+
+        // Cập nhật URL với search param
+        function updateURL(keyword) {
+            const params = new URLSearchParams(window.location.search);
+            if (keyword) {
+                params.set("search", keyword);
+            } else {
+                params.delete("search");
+            }
+            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            window.history.replaceState({}, "", newUrl);
+        }
+
+        // Sự kiện click nút tìm
+        document.getElementById("btnSearch").onclick = () => {
+            const keyword = searchBox.value.trim();
+            renderList(keyword);
+            updateURL(keyword);
+        };
+
+        // Khi load trang → lấy search param từ URL
+        window.addEventListener("DOMContentLoaded", () => {
+            const params = new URLSearchParams(window.location.search);
+            const keyword = params.get("search") || "";
+            searchBox.value = keyword;
+            renderList(keyword);
+        });
+    </script>
+</body>
+
+</html>

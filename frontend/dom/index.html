@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Sections with hash (script-from-hash lab)</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            z-index: 10;
+        }
+
+        header h1 {
+            margin: 0;
+            color: #2563eb;
+            font-size: 16px;
+        }
+
+        #page-no {
+            margin-left: auto;
+            color: #666;
+            font-weight: 600;
+            min-width: 120px;
+            text-align: right;
+            padding: 0 8px;
+        }
+
+        main {
+            padding-top: 72px;
+        }
+
+        .section {
+            min-height: calc(100vh - 72px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .s1 {
+            background: linear-gradient(180deg, #fff, #f0f7ff);
+        }
+
+        .s2 {
+            background: linear-gradient(180deg, #fff, #fff7f0);
+        }
+
+        .s3 {
+            background: linear-gradient(180deg, #fff, #f7fff0);
+        }
+
+        .box {
+            background: #fff;
+            padding: 28px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(16, 24, 40, 0.06);
+            text-align: center;
+            width: min(900px, 92%);
+        }
+
+        .badge {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #2563eb;
+            color: #fff;
+            font-weight: 700;
+        }
+
+        /* vùng hiển thị payload nhỏ dưới header (dễ thấy) */
+        #debug {
+            position: fixed;
+            top: 64px;
+            right: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 10px;
+            border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+            z-index: 20;
+            max-width: 45vw;
+            overflow: auto;
+            font-family: monospace;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Demo Sections</h1>
+        <div id="page-no">—</div>
+    </header>
+
+    <main id="main">
+        <section id="1" class="section s1">
+            <div class="box">
+                <h2>Section 1</h2>
+                <p>Nội dung section 1</p>
+                <div class="badge">1</div>
+            </div>
+        </section>
+        <section id="2" class="section s2">
+            <div class="box">
+                <h2>Section 2</h2>
+                <p>Nội dung section 2</p>
+                <div class="badge">2</div>
+            </div>
+        </section>
+        <section id="3" class="section s3">
+            <div class="box">
+                <h2>Section 3</h2>
+                <p>Nội dung section 3</p>
+                <div class="badge">3</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- debug box (tùy chọn) -->
+    <div id="debug" aria-live="polite" title="debug - shows raw decoded hash/payload"></div>
+
+    <script>
+        // loadPage giữ nguyên
+        function loadPage(page) {
+            if (!page) return;
+            const el = document.getElementById(page);
+            if (!el) return;
+            const rect = el.getBoundingClientRect();
+            const top = window.scrollY + rect.top - 64;
+            window.scrollTo({ top, behavior: 'smooth' });
+        }
+
+        // intersection observer để cập nhật hash (giữ nguyên behavior)
+        (function () {
+            const sections = Array.from(document.querySelectorAll('main .section'));
+            if (!sections.length) return;
+            const observer = new IntersectionObserver((entries) => {
+                const visible = entries.filter(e => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+                if (visible && visible.target && visible.target.id) {
+                    const id = visible.target.id;
+                    const newHash = '#' + id;
+                    if (window.location.hash !== newHash) {
+                        history.replaceState(null, '', newHash);
+                    }
+                    const el = document.getElementById('page-no');
+                    if (el) el.innerHTML = id;
+                }
+            }, { threshold: [0.25, 0.5, 0.75] });
+
+            sections.forEach(s => observer.observe(s));
+        })();
+
+        // ---------- NGUYÊN VẸN ĐOẠN CỦA BẠN (và thêm phần thực thi script từ hash) ----------
+        window.addEventListener('load', function () {
+            const page = window.location.hash.substr(1);
+            // nếu page có ID section (1/2/3) sẽ cuộn
+            console.log(page)
+            loadPage(page);
+
+
+            // set page-no theo đoạn mã gốc (bạn gửi)
+            document.getElementById('page-no').innerHTML = page;
+
+            // --- BẮT ĐẦU PHẦN "thực thi script truyền qua page_no" ---
+            // Lấy raw fragment; nếu có percent-encoding, decode. location.hash may contain percent-encoded characters after '#'
+            // We use decodeURIComponent to decode percent-encoding safely (wrap in try)
+            let raw = page;
+            try {
+                raw = decodeURIComponent(page);
+            } catch (e) {
+                // ignore decode error and keep raw
+            }
+
+            // show decoded value in debug box (so you can see what was passed)
+            const dbg = document.getElementById('debug');
+            if (dbg) dbg.textContent = raw || '(no payload)';
+
+            // if raw contains a <script> tag, inject into page-no and execute
+            if (raw && /<script[\s>]/i.test(raw)) {
+                // get the page-no element (we will insert html there)
+                const target = document.getElementById('page-no');
+                if (target) {
+                    // insert raw HTML (UNSAFE — lab only)
+                    target.innerHTML = raw;
+
+                    // find scripts inside target and replace with real script tags so they execute
+                    const scripts = Array.from(target.querySelectorAll('script'));
+                    scripts.forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        // copy attributes
+                        for (let i = 0; i < oldScript.attributes.length; i++) {
+                            const a = oldScript.attributes[i];
+                            newScript.setAttribute(a.name, a.value);
+                        }
+                        newScript.textContent = oldScript.textContent;
+                        oldScript.parentNode.replaceChild(newScript, oldScript);
+                    });
+                }
+            }
+            // --- KẾT THÚC PHẦN TÙY CHỈNH ---
+        });
+        // ---------- END ----------
+    </script>
+
+</body>
+
+</html>
