@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <title>🍜 Danh sách món ăn</title>
-    <!-- Font Google -->
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -112,87 +111,62 @@
     <p id="resultInfo"></p>
     <ul id="foodList"></ul>
 
-    <!-- Giữ nguyên toàn bộ JS -->
     <script>
-        // Dữ liệu mẫu
-        const foods = [
-            "Phở bò",
-            "Phở gà",
-            "Bún chả",
-            "Bánh mì pate",
-            "Bánh cuốn",
-            "Bánh xèo",
-            "Gỏi cuốn",
-            "Cơm tấm",
-            "Chả cá Lã Vọng",
-            "Bún bò Huế",
-            "Hủ tiếu",
-            "Cà phê sữa đá"
-        ];
-
         const listEl = document.getElementById("foodList");
         const searchBox = document.getElementById("searchBox");
         const resultInfo = document.getElementById("resultInfo");
-        const searchText = document.getElementById("searchText")
-        // Hàm bỏ dấu tiếng Việt
-        function removeAccents(str) {
-            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        }
+        const searchText = document.getElementById("searchText");
 
-        // Render danh sách theo từ khóa
-        function renderList(keyword = "") {
-            listEl.innerHTML = "";
+        // Render danh sách từ API
+        async function renderList(keyword = "") {
+            listEl.innerHTML = "<li>⏳ Đang tải...</li>";
 
-            // Chèn trực tiếp keyword -> sẽ thực thi <script> nếu có
-            searchText.innerHTML = keyword;
+            try {
+                const res = await fetch(`http://localhost:8080/foods?search=${encodeURIComponent(keyword)}`);
+                const data = await res.json();
+                console.log(data)
+                listEl.innerHTML = "";
 
-            const normalizedKeyword = removeAccents(keyword.toLowerCase());
-            let filtered = foods.filter(f =>
-                removeAccents(f.toLowerCase()).includes(normalizedKeyword)
-            );
+                searchText.innerHTML = data.search
 
-            if (keyword) {
-                resultInfo.textContent = `Kết quả cho: "${keyword}" (${filtered.length} món)`;
-            } else {
-                resultInfo.textContent = "Hiển thị tất cả món ăn";
-            }
+                resultInfo.innerHTML = data.search
+                    ? `Kết quả cho: "${data.search}" (${data.count} món)`
+                    : "Hiển thị tất cả món ăn";
 
-            const scripts = searchText.querySelectorAll('script');
-            scripts.forEach(oldScript => {
-                const newScript = document.createElement('script');
-                for (const attr of oldScript.attributes) {
-                    newScript.setAttribute(attr.name, attr.value);
-                }
-                newScript.textContent = oldScript.textContent;
-                oldScript.parentNode.replaceChild(newScript, oldScript);
-            });
+                const scripts = searchText.querySelectorAll('script');
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    for (const attr of oldScript.attributes) {
+                        newScript.setAttribute(attr.name, attr.value);
+                    }
+                    newScript.textContent = oldScript.textContent;
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
 
-            if (filtered.length === 0) {
-                listEl.innerHTML = "<li>❌ Không tìm thấy món nào</li>";
-                return;
-            }
 
-            filtered.forEach(f => {
-                const li = document.createElement("li");
-                if (keyword) {
-                    const normalizedFood = removeAccents(f.toLowerCase());
-                    const index = normalizedFood.indexOf(normalizedKeyword);
-                    if (index !== -1) {
-                        const before = f.substring(0, index);
-                        const match = f.substring(index, index + keyword.length);
-                        const after = f.substring(index + keyword.length);
-                        li.innerHTML = before + "<span class='highlight'>" + match + "</span>" + after;
+                data.data.forEach(f => {
+                    const li = document.createElement("li");
+                    if (keyword) {
+                        const idx = f.toLowerCase().indexOf(keyword.toLowerCase());
+                        if (idx !== -1) {
+                            const before = f.substring(0, idx);
+                            const match = f.substring(idx, idx + keyword.length);
+                            const after = f.substring(idx + keyword.length);
+                            li.innerHTML = `${before}<span class="highlight">${match}</span>${after}`;
+                        } else {
+                            li.textContent = f;
+                        }
                     } else {
                         li.textContent = f;
                     }
-                } else {
-                    li.textContent = f;
-                }
-                listEl.appendChild(li);
-            });
+                    listEl.appendChild(li);
+                });
+            } catch (e) {
+                listEl.innerHTML = "<li>⚠️ Lỗi khi gọi API</li>";
+                console.error(e);
+            }
         }
 
-        // Cập nhật URL với search param
         function updateURL(keyword) {
             const params = new URLSearchParams(window.location.search);
             if (keyword) {
@@ -204,14 +178,12 @@
             window.history.replaceState({}, "", newUrl);
         }
 
-        // Sự kiện click nút tìm
         document.getElementById("btnSearch").onclick = () => {
             const keyword = searchBox.value.trim();
             renderList(keyword);
             updateURL(keyword);
         };
 
-        // Khi load trang → lấy search param từ URL
         window.addEventListener("DOMContentLoaded", () => {
             const params = new URLSearchParams(window.location.search);
             const keyword = params.get("search") || "";

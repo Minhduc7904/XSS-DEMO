@@ -9,9 +9,55 @@ const MAX_STORED_MESSAGES = 1000; // chỉ giữ 1000 tin nhắn mới nhất
 // bộ nhớ tạm để lưu tin nhắn
 const messages = [];
 
+const foods = [
+    "Phở bò",
+    "Phở gà",
+    "Bún chả",
+    "Bánh mì pate",
+    "Bánh cuốn",
+    "Bánh xèo",
+    "Gỏi cuốn",
+    "Cơm tấm",
+    "Chả cá Lã Vọng",
+    "Bún bò Huế",
+    "Hủ tiếu",
+    "Cà phê sữa đá"
+];
+
+// hàm bỏ dấu tiếng Việt
+function removeAccents(str) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 // HTTP server cơ bản
 const server = http.createServer((req, res) => {
-    res.writeHead(200);
+    const url = new URL(req.url, `http://${req.headers.host}`);
+
+    // API GET /foods?search=...
+    if (url.pathname === '/foods' && req.method === 'GET') {
+        const search = url.searchParams.get('search') || '';
+        const normalizedSearch = removeAccents(search.toLowerCase());
+
+        const result = foods.filter(f =>
+            removeAccents(f.toLowerCase()).includes(normalizedSearch)
+        );
+
+        res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Access-Control-Allow-Origin': '*',       // cho phép tất cả origin gọi
+            'Access-Control-Allow-Methods': 'GET',    // chỉ cho GET
+        });
+        res.end(JSON.stringify({
+            search,
+            count: result.length,
+            data: result
+        }));
+        return;
+    }
+
+
+    // Nếu không match API nào
+    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('WS server running\n');
 });
 
@@ -41,7 +87,7 @@ wss.on('connection', (ws, req) => {
 
     ws.on('message', (raw) => {
         const rawStr = typeof raw === 'string' ? raw : raw.toString('utf8');
-        
+
         let payload;
         try {
             payload = JSON.parse(rawStr);
